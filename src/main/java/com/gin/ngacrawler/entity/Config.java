@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+import java.io.Serializable;
+
 /**
  * @author bx002
  */
@@ -17,7 +19,7 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @TableName(value = "t_config")
-public class Config {
+public class Config implements Serializable {
     @TableId(value = "name")
     private String name;
     private String value;
