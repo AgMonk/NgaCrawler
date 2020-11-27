@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=yes"/>
+    <meta charset="UTF-8">
+    <title>搜索</title>
+    <script type="text/javascript" src="js/vue.js"></script>
+    <script type="text/javascript" src="js/axios.min.js"></script>
+    <script type="text/javascript" src="js/queryString.js"></script>
+    <link rel="stylesheet" href="css/tableCss.css">
+    <style type="text/css">
+        .err {
+            color: red;
+        }
+
+        input {
+            /*width: 100px;*/
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <input type="date" v-model="param.dateStart">
+    <input type="date" v-model="param.dateEnd"><br>
+    <input type="text" v-model="param.keyword">
+    <input type="text" v-model="param.authorId">
+    <button @click="search()">搜索</button>
+    <table class="customers">
+        <tr v-for="(item,i) in replies" :class="i%2===0?'alt':null">
+            <td >
+                <a :href="'https://bbs.nga.cn/read.php?pid='+item.pid" target="_blank">回复链接</a>
+                <div>{{item.content}}</div>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+<script>
+    const app = new Vue({
+        el: "#app",
+        data: {
+            replies:[],
+            param: {
+                dateStart: 0,
+                dateEnd: 0,
+                keyword: "RO 老婆",
+                authorId: 25020670,
+            },
+        },
+        methods: {
+            search() {
+                get("/test/search", this.param, function (res) {
+                    console.log(res.data);
+                    _this.replies = res.data;
+                })
+            },
+            log(s) {
+                console.log(s);
+            }
+        },
+        created() {
+            let m = new Date().getTime();
+            this.param.dateEnd = new Date(m).toLocaleDateString().replaceAll('/', '-');
+            this.param.dateStart = new Date(m - 7 * 24 * 3600 * 1000).toLocaleDateString().replaceAll('/', '-');
+        },
+    });
+    const _this = app;
+</script>
+</html>
+
