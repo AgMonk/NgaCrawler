@@ -14,4 +14,6 @@ public interface ScanService {
     List<Reply> searchReplies(Long authorId, String[] keyword, Long startSecond, Long endSecond);
 
     void autoScanContinue();
+
+    void printOutContent();
 }

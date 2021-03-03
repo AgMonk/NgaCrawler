@@ -14,8 +14,14 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,6 +32,17 @@ import java.util.stream.Stream;
 @Transactional
 @Slf4j
 public class ScanServiceImpl extends ServiceImpl<ReplyDAO, Reply> implements ScanService {
+    public static final String QUOTE_REGEX = "\\[quote]\\[pid=.+?\\[/quote]";
+    public static final String CODE_REGEX = "\\[code.+\\[/code]";
+    public static final String REPLY_REGEX = "\\[b]Reply to.+?\\[/b]";
+    public static final String IMG_REGEX = "\\[img].+?\\[/img]";
+    public static final String URL_REGEX = "\\[url].+?\\[/url]";
+    public static final String SIZE_REGEX = "\\[size=.+?]";
+    public static final String BQ_REGEX = "\\[s:.+?]";
+
+
+    private static final Pattern QUOTE_PATTERN = Pattern.compile(QUOTE_REGEX);
+    private static final Pattern REPLY_PATTERN = Pattern.compile(REPLY_REGEX);
     private final Integer AUTO_SCAN_TID;
     private final ThreadPoolTaskExecutor readExecutor;
     private final String cookie;
@@ -118,6 +135,7 @@ public class ScanServiceImpl extends ServiceImpl<ReplyDAO, Reply> implements Sca
 
     /**
      * 系统重启后接续之前自动扫描
+     *
      * @param
      * @return void
      * @author bx002
@@ -151,6 +169,70 @@ public class ScanServiceImpl extends ServiceImpl<ReplyDAO, Reply> implements Sca
 
     public void searchAllPost(Integer authorId, Integer fid) {
         ArrayList<Integer> list = new ArrayList<>(NgaPost.findAllPostTid(authorId, cookie, fid));
+
+    }
+
+    @Override
+    public void printOutContent() {
+        boolean test =false;
+        QueryWrapper<Reply> qw = new QueryWrapper<>();
+        qw.orderByDesc("pid");
+        if (test) {
+            qw.last("limit 0,2000");
+        }
+        List<Reply> replies = list(qw);
+
+        try {
+            PrintWriter printWriter = new PrintWriter(new FileWriter(String.format("d:/%s.txt", System.currentTimeMillis())));
+            int count = 1;
+            for (Reply reply : replies) {
+                String s = reply.getContent()
+                        .replaceAll(QUOTE_REGEX, "")
+                        .replaceAll(REPLY_REGEX, "")
+                        .replaceAll(URL_REGEX, "")
+                        .replaceAll(BQ_REGEX, "")
+                        .replaceAll(CODE_REGEX, "")
+                        .replaceAll(SIZE_REGEX, "")
+                        .replaceAll(IMG_REGEX, "")
+                        .replace("<br/>", " ")
+                        .replace("[del]", " ")
+                        .replace("[/del]", " ")
+                        .replace("[b]", " ")
+                        .replace("[/b]", " ")
+                        .replace("[collapse]", " ")
+                        .replace("[/collapse]", " ")
+                        .replace("[quote]", " ")
+                        .replace("[/quote]", " ")
+                        .replace("[collapse=", " ")
+                        .replace("[/collapse]", " ")
+                        .replace("[url=", " ")
+                        .replace("[/url]", " ")
+                        .replace("[/size]", " ")
+                        .replace("]", " ")
+                        .trim();
+                while (s.contains("  ")) {
+                    s = s.replace("  ", " ");
+                }
+
+                if (test) {
+                    printWriter.println(String.format("%s -> %s", reply.getPid(), s));
+                } else {
+                    printWriter.println(s);
+                }
+                count++;
+                if (count%80000==0) {
+                    printWriter.flush();
+                    printWriter.close();
+                    printWriter = new PrintWriter(new FileWriter(String.format("d:/%s.txt", System.currentTimeMillis())));
+                }
+            }
+            printWriter.flush();
+            printWriter.close();
+            System.out.println("输出完毕");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
     }
 

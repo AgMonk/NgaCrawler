@@ -24,5 +24,6 @@ public class RunAfter implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         scanService.autoScanContinue();
+//        scanService.printOutContent();
     }
 }
